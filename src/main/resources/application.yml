@@ -1,0 +1,17 @@
+spring:
+  thymeleaf:
+    cache: false
+  profiles:
+    active: dev
+
+
+mybatis:
+  type-aliases-package: com.pc.domain
+  mapperLocations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+server:
+  port: 8800

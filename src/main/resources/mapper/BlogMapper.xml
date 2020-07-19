@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pc.mapper.IBlogMapper">
+
+    <sql id="allColumn">
+        id,title,first_picture,flag,content,description,views,appreciation,share_statement,commentabled,published,recommended,create_time,update_time,user_id,type_id
+    </sql>
+    <sql id="insertColumn">
+        (title,first_picture,flag,content,description,views,appreciation,share_statement,commentabled,published,recommended,create_time,update_time,user_id,type_id)
+    </sql>
+    <sql id="valueColumn">
+        (#{title},#{firstPicture},#{flag},#{content},#{description},#{views},#{appreciation},#{shareStatement},#{commentabled},#{published},#{recommended},#{createTime},#{updateTime},#{userId},#{typeId})
+    </sql>
+    <insert id="saveBlog" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        insert into blog <include refid="insertColumn"></include>
+        values <include refid="valueColumn"></include>
+    </insert>
+    <insert id="saveBlogAndTag">
+        insert into blog_tag (blog_id,tag_id)
+        values (#{blogId},#{tagId})
+    </insert>
+    <delete id="deleteBlogAndTags">
+        delete from blog_tag
+        where blog_id = #{blogId}
+    </delete>
+    <select id="getBlogById" resultType="Blog">
+        select <include refid="allColumn"></include> from blog where id = #{id}
+    </select>
+    <delete id="deleteBlog">
+        delete from blog where id = #{id}
+    </delete>
+    <update id="updateBlog">
+        update blog
+        <set>
+            <if test="title != null">title=#{title},</if>
+            <if test="firstPicture != null">first_picture=#{firstPicture},</if>
+            <if test="flag != null">flag=#{flag},</if>
+            <if test="content != null">content=#{content},</if>
+            <if test="description != null">description=#{description},</if>
+            <if test="views != null">views=#{views},</if>
+            <if test="appreciation != null">appreciation=#{appreciation},</if>
+            <if test="shareStatement != null">share_statement=#{shareStatement},</if>
+            <if test="commentabled != null">commentabled=#{commentabled},</if>
+            <if test="published != null">published=#{published},</if>
+            <if test="recommended != null">recommended=#{recommended},</if>
+            <if test="createTime != null">create_time=#{createTime},</if>
+            <if test="updateTime != null">update_time=#{updateTime},</if>
+        </set>
+        where id = #{id}
+    </update>
+    <resultMap id="blogQuery" type="com.pc.vo.BlogQuery">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="recommended" column="recommended"/>
+        <result property="typeId" column="type_id"/>
+        <association property="type" javaType="com.pc.domain.Type">
+            <id property="id" column="type_id"/>
+            <result property="name" column="name"/>
+        </association>
+    </resultMap>
+    <resultMap id="blog" type="com.pc.domain.Blog">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="views" column="views"/>
+        <result property="firstPicture" column="first_picture"/>
+        <result property="description" column="description"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="typeId" column="type_id"/>
+        <association property="type" javaType="com.pc.domain.Type">
+            <id property="id" column="type_id"/>
+            <result property="name" column="name"/>
+        </association>
+        <association property="user" javaType="com.pc.domain.User">
+            <id property="id" column="user_id"/>
+            <result property="avatar" column="avatar"/>
+            <result property="nickName" column="nick_name"/>
+        </association>
+    </resultMap>
+    <select id="getAllBlog" resultMap="blog">
+        select b.id,b.title,b.update_time,b.views,b.description,b.first_picture,b.type_id,b.user_id,t.name,u.avatar,u.nick_name
+        from blog b left outer join type t on b.type_id = t.id left outer join user u on b.user_id = u.id
+        order by b.update_time desc
+    </select>
+    <select id="listBlog" resultMap="blogQuery">
+        select b.id,b.title,b.update_time,b.recommended,b.type_id,t.id,t.name from blog b left outer join
+        type t on type_id = t.id order by b.update_time desc
+    </select>
+    <select id="getBlogBySearch" resultMap="blogQuery">
+        select b.id,b.title,b.update_time,b.recommended,b.type_id,t.id,t.name from blog b left outer join
+        type t on b.type_id = t.id
+        where 1=1
+        <if test="title != null">
+            AND title like "%"#{title}"%"
+        </if>
+        <if test="typeId != 0">
+            AND type_id = #{typeId}
+        </if>
+        <if test="recommended != 0">
+            AND recommended = #{recommended}
+        </if>
+        order by b.update_time desc
+    </select>
+
+    <select id="listBlogByTypeId" resultMap="blog">
+        select b.id,b.title,b.update_time,b.views,b.description,b.first_picture,b.type_id,b.user_id,t.name,u.avatar,u.nick_name
+        from blog b left outer join type t on b.type_id = t.id left outer join user u on b.user_id = u.id
+        where b.type_id = #{typeId}
+        order by b.update_time desc
+    </select>
+
+    <select id="listBlogByTagId" resultMap="blog">
+        select b.id,b.title,b.update_time,b.views,b.description,b.first_picture,b.type_id,b.user_id,t.name,u.avatar,u.nick_name
+        from blog b,type t,user u ,blog_tag bt,tag
+        where b.type_id = t.id and u.id = b.user_id and bt.blog_id = b.id and bt.tag_id = tag.id and tag.id = #{tagId}
+        order by b.update_time desc
+    </select>
+</mapper>
